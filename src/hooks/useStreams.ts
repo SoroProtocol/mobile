@@ -39,10 +39,12 @@ export function useStream(id: string | null) {
 
   useEffect(() => {
     if (!id) return;
+    setStream(null);
+    setError(null);
     setLoading(true);
     streamsApi.get(id)
       .then(setStream)
-      .catch(e => setError(e.message))
+      .catch(e => setError(e instanceof Error ? e.message : 'Stream not found'))
       .finally(() => setLoading(false));
   }, [id]);
 
