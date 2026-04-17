@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { streamsApi, type ApiStream }        from '../services/api';
 
 interface UseStreamsReturn {
@@ -36,17 +36,28 @@ export function useStream(id: string | null) {
   const [stream,  setStream]  = useState<ApiStream | null>(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
+  const idRef = useRef(id);
 
-  useEffect(() => {
-    if (!id) return;
+  const loadStream = useCallback(async () => {
+    const currentId = idRef.current;
+    if (!currentId) return;
     setStream(null);
     setError(null);
     setLoading(true);
-    streamsApi.get(id)
-      .then(setStream)
-      .catch(e => setError(e instanceof Error ? e.message : 'Stream not found'))
-      .finally(() => setLoading(false));
-  }, [id]);
+    try {
+      const data = await streamsApi.get(currentId);
+      setStream(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Stream not found');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  return { stream, loading, error };
+  useEffect(() => {
+    idRef.current = id;
+    void loadStream();
+  }, [id, loadStream]);
+
+  return { stream, loading, error, refetch: loadStream };
 }
