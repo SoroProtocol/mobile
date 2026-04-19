@@ -39,9 +39,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setWallet = useCallback(async (address: string, session: string) => {
-    await SecureStore.setItemAsync(KEY_ADDRESS, address);
-    await SecureStore.setItemAsync(KEY_SESSION, session);
-    setState(s => ({ ...s, address, session, error: null }));
+    try {
+      await SecureStore.setItemAsync(KEY_ADDRESS, address);
+      await SecureStore.setItemAsync(KEY_SESSION, session);
+      setState(s => ({ ...s, address, session, error: null }));
+    } catch (e) {
+      setState(s => ({ ...s, error: e instanceof Error ? e.message : 'Failed to save wallet' }));
+    }
   }, []);
 
   const clearWallet = useCallback(async () => {
