@@ -32,8 +32,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const address = await SecureStore.getItemAsync(KEY_ADDRESS);
         const session = await SecureStore.getItemAsync(KEY_SESSION);
         setState({ address, session, loading: false, error: null });
-      } catch {
-        setState(s => ({ ...s, loading: false }));
+      } catch (e) {
+        setState(s => ({
+          ...s,
+          loading: false,
+          error: e instanceof Error ? e.message : 'Failed to load wallet',
+        }));
       }
     })();
   }, []);
@@ -49,9 +53,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearWallet = useCallback(async () => {
-    await SecureStore.deleteItemAsync(KEY_ADDRESS);
-    await SecureStore.deleteItemAsync(KEY_SESSION);
-    setState(s => ({ ...s, address: null, session: null }));
+    try {
+      await SecureStore.deleteItemAsync(KEY_ADDRESS);
+      await SecureStore.deleteItemAsync(KEY_SESSION);
+      setState(s => ({ ...s, address: null, session: null }));
+    } catch (e) {
+      setState(s => ({ ...s, error: e instanceof Error ? e.message : 'Failed to disconnect wallet' }));
+    }
   }, []);
 
   return (
