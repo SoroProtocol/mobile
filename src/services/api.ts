@@ -12,7 +12,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const timeout = setTimeout(() => controller.abort(), 15_000);
   try {
     const res = await fetch(`${BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: {
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...init?.headers,
+      },
       ...init,
       signal: controller.signal,
     });
