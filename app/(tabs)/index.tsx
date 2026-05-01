@@ -3,48 +3,23 @@ import {
   TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { useRouter }   from 'expo-router';
-import { useState }    from 'react';
 import { StreamCard }  from '@/components/StreamCard';
 import { useWallet }   from '@/context/WalletContext';
+import { useStreams }  from '@/hooks/useStreams';
 import { Colors }      from '@/constants/Colors';
 import { Layout }      from '@/constants/Layout';
 
 const T = Colors.dark;
 
-const MOCK_STREAMS = [
-  {
-    id: '0',
-    recipient: 'GBOB1234567890123456789012345678901234567890123456789012',
-    ratePerSecond: 116n,
-    startTime: 1735689600,
-    stopTime:  1738368000,
-    cancelled: false,
-  },
-  {
-    id: '1',
-    recipient: 'GCAR1234567890123456789012345678901234567890123456789012',
-    ratePerSecond: 231n,
-    startTime: 1735776000,
-    stopTime:  1743552000,
-    cancelled: false,
-  },
-];
-
 export default function StreamsScreen() {
-  const { address, loading } = useWallet();
-  const router               = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
+  const { address, loading: walletLoading } = useWallet();
+  const router = useRouter();
+  const { streams, loading, error, refetch } = useStreams(address);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await new Promise(r => setTimeout(r, 800));
-    setRefreshing(false);
-  };
-
-  if (loading) {
+  if (walletLoading) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.muted}>Loading…</Text>
+        <Text style={styles.muted}>Loading wallet…</Text>
       </View>
     );
   }
@@ -54,11 +29,19 @@ export default function StreamsScreen() {
       <View style={styles.centered}>
         <Text style={styles.emptyTitle}>No wallet connected</Text>
         <Text style={styles.muted}>Go to Settings to connect your Stellar wallet.</Text>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => router.push('/settings')}
-        >
+        <TouchableOpacity style={styles.btn} onPress={() => router.push('/settings')}>
           <Text style={styles.btnText}>Go to Settings</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.error}>{error}</Text>
+        <TouchableOpacity style={styles.btn} onPress={refetch}>
+          <Text style={styles.btnText}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -67,22 +50,29 @@ export default function StreamsScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={MOCK_STREAMS}
+        data={streams}
         keyExtractor={s => s.id}
-        renderItem={({ item }) => <StreamCard {...item} />}
+        renderItem={({ item }) => (
+          <StreamCard
+            id={item.id}
+            recipient={item.recipient}
+            ratePerSecond={BigInt(item.ratePerSecond)}
+            startTime={item.startTime}
+            stopTime={item.stopTime}
+            cancelled={item.status === 'cancelled'}
+          />
+        )}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={T.accent}
-          />
+          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={T.accent} />
         }
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyTitle}>No streams yet</Text>
-            <Text style={styles.muted}>Create your first stream to get started.</Text>
-          </View>
+          !loading ? (
+            <View style={styles.centered}>
+              <Text style={styles.emptyTitle}>No streams yet</Text>
+              <Text style={styles.muted}>Create your first stream to get started.</Text>
+            </View>
+          ) : null
         }
       />
     </View>
@@ -91,10 +81,14 @@ export default function StreamsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
-  list:      { padding: Layout.spacing.md },
-  centered:  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Layout.spacing.lg },
-  emptyTitle:{ color: T.text, fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  muted:     { color: T.textMuted, textAlign: 'center', fontSize: 14 },
+  list:      { padding: Layout.spacing.md, flexGrow: 1 },
+  centered:  {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    padding: Layout.spacing.lg, minHeight: 300,
+  },
+  emptyTitle:{ color: T.text, fontSize: 18, fontWeight: '600', marginBottom: 8, textAlign: 'center' },
+  muted:     { color: T.textMuted, textAlign: 'center', fontSize: 14, lineHeight: 20 },
+  error:     { color: T.danger, textAlign: 'center', marginBottom: 12 },
   btn: {
     marginTop: Layout.spacing.md,
     backgroundColor: T.accent,

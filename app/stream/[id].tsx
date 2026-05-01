@@ -1,68 +1,71 @@
 import {
   View, Text, TouchableOpacity,
-  StyleSheet, Alert, ScrollView,
+  StyleSheet, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BalanceCounter } from '@/components/BalanceCounter';
-import { Colors }         from '@/constants/Colors';
-import { Layout }         from '@/constants/Layout';
+import { useStream }        from '@/hooks/useStreams';
+import { useWallet }        from '@/context/WalletContext';
+import { BalanceCounter }   from '@/components/BalanceCounter';
+import { Colors }           from '@/constants/Colors';
+import { Layout }           from '@/constants/Layout';
 
 const T = Colors.dark;
-
-const MOCK: Record<string, any> = {
-  '0': {
-    id: '0',
-    sender:    'GABC1234567890123456789012345678901234567890123456789012',
-    recipient: 'GBOB1234567890123456789012345678901234567890123456789012',
-    token:     'XLM',
-    ratePerSecond: 116n,
-    startTime: 1735689600,
-    stopTime:  1738368000,
-    withdrawn: 1_000_000n,
-    cancelled: false,
-  },
-};
 
 function trunc(addr: string) { return `${addr.slice(0,6)}...${addr.slice(-4)}`; }
 
 export default function StreamDetail() {
-  const { id }  = useLocalSearchParams<{ id: string }>();
-  const router  = useRouter();
-  const stream  = MOCK[id ?? ''];
+  const { id }   = useLocalSearchParams<{ id: string }>();
+  const router   = useRouter();
+  const { address } = useWallet();
+  const { stream, loading, error } = useStream(id ?? null);
 
-  if (!stream) {
+  if (loading) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.notFound}>Stream not found.</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Go back</Text>
+        <ActivityIndicator color={T.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (error || !stream) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.notFound}>{error ?? 'Stream not found.'}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backText}>← Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  const isSender    = address === stream.sender;
+  const isRecipient = address === stream.recipient;
+  const isActive    = stream.status === 'active';
+  const perDay      = (Number(stream.ratePerSecond) * 86400 / 1e7).toFixed(4);
+
   const handleWithdraw = () =>
-    Alert.alert('Withdraw', 'This will claim your accrued balance.', [
+    Alert.alert('Withdraw', 'Claim your accrued balance now?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Withdraw', onPress: () => {} },
     ]);
 
   const handleCancel = () =>
-    Alert.alert('Cancel Stream', 'Accrued balance goes to recipient. Are you sure?', [
+    Alert.alert('Cancel Stream', 'Accrued balance goes to recipient. This cannot be undone.', [
       { text: 'Keep Stream', style: 'cancel' },
       { text: 'Cancel Stream', style: 'destructive', onPress: () => {} },
     ]);
 
-  const perDay = (Number(stream.ratePerSecond) * 86400 / 1e7).toFixed(4);
-
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      {/* Balance card */}
+      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
+
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Withdrawable Balance</Text>
         <BalanceCounter
-          ratePerSecond={stream.ratePerSecond}
-          withdrawn={stream.withdrawn}
+          ratePerSecond={BigInt(stream.ratePerSecond)}
+          withdrawn={BigInt(stream.withdrawn)}
           startTime={stream.startTime}
           stopTime={stream.stopTime}
           style={styles.balanceValue}
@@ -70,14 +73,13 @@ export default function StreamDetail() {
         <Text style={styles.balanceRate}>{perDay} XLM/day</Text>
       </View>
 
-      {/* Details */}
       <View style={styles.card}>
-        {[
+        {([
           ['From',   trunc(stream.sender)],
           ['To',     trunc(stream.recipient)],
-          ['Token',  stream.token],
-          ['Status', stream.cancelled ? 'Cancelled' : 'Active'],
-        ].map(([k, v]) => (
+          ['Token',  stream.token === 'native' ? 'XLM' : trunc(stream.token)],
+          ['Status', stream.status.charAt(0).toUpperCase() + stream.status.slice(1)],
+        ] as [string, string][]).map(([k, v]) => (
           <View key={k} style={styles.row}>
             <Text style={styles.rowKey}>{k}</Text>
             <Text style={styles.rowVal}>{v}</Text>
@@ -85,15 +87,21 @@ export default function StreamDetail() {
         ))}
       </View>
 
-      {/* Actions */}
-      {!stream.cancelled && (
+      {isActive && (
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.btnWithdraw} onPress={handleWithdraw}>
-            <Text style={styles.btnText}>Withdraw</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnCancel} onPress={handleCancel}>
-            <Text style={styles.btnCancelText}>Cancel Stream</Text>
-          </TouchableOpacity>
+          {isRecipient && (
+            <TouchableOpacity style={styles.btnWithdraw} onPress={handleWithdraw}>
+              <Text style={styles.btnText}>Withdraw</Text>
+            </TouchableOpacity>
+          )}
+          {isSender && (
+            <TouchableOpacity style={styles.btnCancel} onPress={handleCancel}>
+              <Text style={styles.btnCancelText}>Cancel Stream</Text>
+            </TouchableOpacity>
+          )}
+          {!isSender && !isRecipient && (
+            <Text style={styles.notParty}>Connect the sender or recipient wallet to take action.</Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -101,28 +109,28 @@ export default function StreamDetail() {
 }
 
 const styles = StyleSheet.create({
-  scroll:   { flex: 1, backgroundColor: T.bg },
-  content:  { padding: Layout.spacing.md },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFound: { color: T.textMuted, fontSize: 16 },
-  back:     { color: T.accent, marginTop: 12 },
+  scroll:    { flex: 1, backgroundColor: T.bg },
+  content:   { padding: Layout.spacing.md },
+  centered:  { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg },
+  notFound:  { color: T.textMuted, fontSize: 16, marginBottom: 12 },
+  backBtn:   { marginBottom: Layout.spacing.md },
+  backText:  { color: T.accent, fontSize: 14 },
 
   balanceCard: {
-    background: 'transparent',
-    borderRadius: Layout.radius.lg,
     backgroundColor: '#1e1b4b',
+    borderRadius: Layout.radius.lg,
     borderWidth: 1, borderColor: T.accent,
     padding: Layout.spacing.lg,
     alignItems: 'center',
     marginBottom: Layout.spacing.md,
   },
   balanceLabel: { color: T.textMuted, fontSize: 13, marginBottom: 8 },
-  balanceValue: { fontSize: 36, marginBottom: 4 },
+  balanceValue: { fontSize: 32, marginBottom: 4 },
   balanceRate:  { color: T.textMuted, fontSize: 13 },
 
   card: {
     backgroundColor: T.surface,
-    borderRadius:    Layout.radius.md,
+    borderRadius: Layout.radius.md,
     borderWidth: 1, borderColor: T.border,
     marginBottom: Layout.spacing.md,
     overflow: 'hidden',
@@ -137,18 +145,15 @@ const styles = StyleSheet.create({
 
   actions: { gap: 12 },
   btnWithdraw: {
-    backgroundColor: T.success,
-    borderRadius: Layout.radius.md,
-    padding: Layout.spacing.md,
-    alignItems: 'center',
+    backgroundColor: T.success, borderRadius: Layout.radius.md,
+    padding: Layout.spacing.md, alignItems: 'center',
   },
   btnCancel: {
-    backgroundColor: 'transparent',
-    borderRadius: Layout.radius.md,
+    backgroundColor: 'transparent', borderRadius: Layout.radius.md,
     borderWidth: 1, borderColor: T.danger,
-    padding: Layout.spacing.md,
-    alignItems: 'center',
+    padding: Layout.spacing.md, alignItems: 'center',
   },
-  btnText:       { color: '#fff', fontWeight: '700', fontSize: 15 },
-  btnCancelText: { color: T.danger, fontWeight: '700', fontSize: 15 },
+  btnText:      { color: '#fff', fontWeight: '700', fontSize: 15 },
+  btnCancelText:{ color: T.danger, fontWeight: '700', fontSize: 15 },
+  notParty:     { color: T.textMuted, textAlign: 'center', fontSize: 13 },
 });
