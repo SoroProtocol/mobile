@@ -31,6 +31,8 @@ export default function CreateStream() {
     if (!form.ratePerDay || Number(form.ratePerDay) <= 0) e.ratePerDay = 'Must be > 0';
     if (!form.startDate) e.startDate = 'Required';
     if (!form.stopDate)  e.stopDate  = 'Required';
+    if (form.startDate && form.stopDate && new Date(form.stopDate) <= new Date(form.startDate))
+      e.stopDate = 'Must be after start date';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
