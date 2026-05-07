@@ -56,7 +56,7 @@ export default function StreamsScreen() {
           <StreamCard
             id={item.id}
             recipient={item.recipient}
-            ratePerSecond={BigInt(item.ratePerSecond)}
+            ratePerSecond={BigInt(item.ratePerSecond || '0')}
             startTime={item.startTime}
             stopTime={item.stopTime}
             cancelled={item.status === 'cancelled'}
