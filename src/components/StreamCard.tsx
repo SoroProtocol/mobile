@@ -34,6 +34,9 @@ export function StreamCard({ id, recipient, ratePerSecond, startTime, stopTime, 
       style={styles.card}
       onPress={() => router.push(`/stream/${id}`)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Stream ${id}, ${cancelled ? 'Cancelled' : 'Active'}`}
+      accessibilityHint="Tap to view stream details"
     >
       <View style={styles.header}>
         <Text style={styles.id}>Stream #{id}</Text>
