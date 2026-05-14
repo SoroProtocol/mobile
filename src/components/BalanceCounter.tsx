@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, StyleSheet, Animated } from 'react-native';
+import { Text, StyleSheet, Animated, StyleProp, TextStyle } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
 interface BalanceCounterProps {
@@ -7,7 +7,7 @@ interface BalanceCounterProps {
   withdrawn:     bigint;
   startTime:     number;
   stopTime:      number;
-  style?:        object;
+  style?:        StyleProp<TextStyle>;
 }
 
 const T = Colors.dark;
@@ -41,7 +41,10 @@ export function BalanceCounter({
   const xlm = (Number(balance) / 1e7).toFixed(7);
 
   return (
-    <Animated.Text style={[styles.balance, style, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.Text
+      style={[styles.balance, style, { transform: [{ scale: scaleAnim }] }]}
+      accessibilityLabel={`${xlm} XLM available to withdraw`}
+    >
       {xlm}
     </Animated.Text>
   );
