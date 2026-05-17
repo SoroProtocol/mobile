@@ -80,6 +80,7 @@ export default function CreateStream() {
               onChangeText={v => update(key, v)}
               autoCapitalize="none"
               autoCorrect={false}
+              accessibilityLabel={label}
             />
             {errors[key] && <Text style={styles.error}>{errors[key]}</Text>}
           </View>
