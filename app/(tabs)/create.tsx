@@ -90,6 +90,9 @@ export default function CreateStream() {
           style={[styles.btn, status === 'submitting' && styles.btnDisabled]}
           onPress={submit}
           disabled={status === 'submitting'}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: status === 'submitting' }}
+          accessibilityLabel={status === 'submitting' ? 'Creating stream' : 'Create stream'}
         >
           <Text style={styles.btnText}>
             {status === 'submitting' ? 'Creating…' : 'Create Stream'}
