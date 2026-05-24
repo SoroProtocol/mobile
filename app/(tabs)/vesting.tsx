@@ -60,7 +60,11 @@ export default function VestingScreen() {
               </View>
               <Text style={styles.pctLabel}>{pct}% vested</Text>
 
-              <TouchableOpacity style={styles.claimBtn}>
+              <TouchableOpacity
+                style={styles.claimBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Claim vested tokens"
+              >
                 <Text style={styles.claimText}>Claim Vested Tokens</Text>
               </TouchableOpacity>
             </View>
