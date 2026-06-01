@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, DimensionValue } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors }   from '@/constants/Colors';
 import { Layout }   from '@/constants/Layout';
@@ -57,7 +57,7 @@ export function StreamCard({ id, recipient, ratePerSecond, startTime, stopTime, 
       </View>
 
       <View style={styles.barBg}>
-        <View style={[styles.barFill, { width: `${pct}%` as any }]} />
+        <View style={[styles.barFill, { width: `${pct}%` as DimensionValue }]} />
       </View>
       <Text style={styles.pct}>{pct}% elapsed</Text>
     </TouchableOpacity>

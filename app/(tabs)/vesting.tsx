@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, DimensionValue } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 
@@ -56,7 +56,7 @@ export default function VestingScreen() {
               </View>
 
               <View style={styles.barBg}>
-                <View style={[styles.barFill, { width: `${pct}%` as any }]} />
+                <View style={[styles.barFill, { width: `${pct}%` as DimensionValue }]} />
               </View>
               <Text style={styles.pctLabel}>{pct}% vested</Text>
 
