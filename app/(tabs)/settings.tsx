@@ -30,12 +30,22 @@ export default function SettingsScreen() {
               <Text style={styles.itemLabel}>Connected</Text>
               <Text style={styles.itemMono}>{address.slice(0,8)}...{address.slice(-6)}</Text>
             </View>
-            <TouchableOpacity style={styles.dangerBtn} onPress={handleDisconnect}>
+            <TouchableOpacity
+              style={styles.dangerBtn}
+              onPress={handleDisconnect}
+              accessibilityRole="button"
+              accessibilityLabel="Disconnect wallet"
+              accessibilityHint="Removes wallet credentials from this device"
+            >
               <Text style={styles.dangerText}>Disconnect</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.connectBtn}>
+          <TouchableOpacity
+            style={styles.connectBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Connect wallet"
+          >
             <Text style={styles.connectText}>Connect Wallet</Text>
           </TouchableOpacity>
         )}

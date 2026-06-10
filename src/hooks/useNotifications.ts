@@ -4,12 +4,17 @@ import { registerForPushNotifications } from '../services/notifications';
 
 export function useNotifications(onEvent?: (notification: Notifications.Notification) => void) {
   const listenerRef = useRef<Notifications.Subscription | null>(null);
+  const onEventRef  = useRef(onEvent);
+
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   useEffect(() => {
     void registerForPushNotifications();
 
     listenerRef.current = Notifications.addNotificationReceivedListener(notification => {
-      onEvent?.(notification);
+      onEventRef.current?.(notification);
     });
 
     return () => {
@@ -17,5 +22,5 @@ export function useNotifications(onEvent?: (notification: Notifications.Notifica
         Notifications.removeNotificationSubscription(listenerRef.current);
       }
     };
-  }, [onEvent]);
+  }, []);
 }

@@ -31,6 +31,8 @@ export default function CreateStream() {
     if (!form.ratePerDay || Number(form.ratePerDay) <= 0) e.ratePerDay = 'Must be > 0';
     if (!form.startDate) e.startDate = 'Required';
     if (!form.stopDate)  e.stopDate  = 'Required';
+    if (form.startDate && form.stopDate && new Date(form.stopDate) <= new Date(form.startDate))
+      e.stopDate = 'Must be after start date';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -57,7 +59,7 @@ export default function CreateStream() {
   return (
     <KeyboardAvoidingView
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>New Payment Stream</Text>
@@ -78,6 +80,7 @@ export default function CreateStream() {
               onChangeText={v => update(key, v)}
               autoCapitalize="none"
               autoCorrect={false}
+              accessibilityLabel={label}
             />
             {errors[key] && <Text style={styles.error}>{errors[key]}</Text>}
           </View>
@@ -87,6 +90,9 @@ export default function CreateStream() {
           style={[styles.btn, status === 'submitting' && styles.btnDisabled]}
           onPress={submit}
           disabled={status === 'submitting'}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: status === 'submitting' }}
+          accessibilityLabel={status === 'submitting' ? 'Creating stream' : 'Create stream'}
         >
           <Text style={styles.btnText}>
             {status === 'submitting' ? 'Creating…' : 'Create Stream'}

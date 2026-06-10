@@ -57,7 +57,12 @@ export default function StreamDetail() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backBtn}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+      >
         <Text style={styles.backText}>← Back</Text>
       </TouchableOpacity>
 
@@ -90,12 +95,24 @@ export default function StreamDetail() {
       {isActive && (
         <View style={styles.actions}>
           {isRecipient && (
-            <TouchableOpacity style={styles.btnWithdraw} onPress={handleWithdraw}>
+            <TouchableOpacity
+              style={styles.btnWithdraw}
+              onPress={handleWithdraw}
+              accessibilityRole="button"
+              accessibilityLabel="Withdraw balance"
+              accessibilityHint="Claims your accrued balance"
+            >
               <Text style={styles.btnText}>Withdraw</Text>
             </TouchableOpacity>
           )}
           {isSender && (
-            <TouchableOpacity style={styles.btnCancel} onPress={handleCancel}>
+            <TouchableOpacity
+              style={styles.btnCancel}
+              onPress={handleCancel}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel stream"
+              accessibilityHint="This action cannot be undone"
+            >
               <Text style={styles.btnCancelText}>Cancel Stream</Text>
             </TouchableOpacity>
           )}

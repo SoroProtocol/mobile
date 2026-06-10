@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, DimensionValue } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors }   from '@/constants/Colors';
 import { Layout }   from '@/constants/Layout';
@@ -34,6 +34,9 @@ export function StreamCard({ id, recipient, ratePerSecond, startTime, stopTime, 
       style={styles.card}
       onPress={() => router.push(`/stream/${id}`)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Stream ${id}, ${cancelled ? 'Cancelled' : 'Active'}`}
+      accessibilityHint="Tap to view stream details"
     >
       <View style={styles.header}>
         <Text style={styles.id}>Stream #{id}</Text>
@@ -54,7 +57,7 @@ export function StreamCard({ id, recipient, ratePerSecond, startTime, stopTime, 
       </View>
 
       <View style={styles.barBg}>
-        <View style={[styles.barFill, { width: `${pct}%` as any }]} />
+        <View style={[styles.barFill, { width: `${pct}%` as DimensionValue }]} />
       </View>
       <Text style={styles.pct}>{pct}% elapsed</Text>
     </TouchableOpacity>
